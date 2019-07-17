@@ -1,9 +1,10 @@
-package psychegrammer.example.smack
+package psychegrammer.example.smack.Controller
 
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import psychegrammer.example.smack.R
 
 class LoginActivity : AppCompatActivity() {
 
