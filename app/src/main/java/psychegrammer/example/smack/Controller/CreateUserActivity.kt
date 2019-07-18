@@ -7,6 +7,7 @@ import android.view.View
 import kotlinx.android.synthetic.main.activity_create_user.*
 import psychegrammer.example.smack.R
 import psychegrammer.example.smack.Services.AuthService
+import psychegrammer.example.smack.Services.UserDataService
 import java.util.*
 
 class CreateUserActivity : AppCompatActivity() {
@@ -51,9 +52,24 @@ class CreateUserActivity : AppCompatActivity() {
     }
 
     fun createUserClicked(view: View) {
-        AuthService.registerUser(this, "j@j.com", "123456") { complete ->
-            if (complete) {
+        val userName = createUserNameText.text.toString()
+        val email = createEmailText.text.toString()
+        val password = createPasswordText.text.toString()
 
+        AuthService.registerUser(this, email, password) { registerSuccess ->
+            if (registerSuccess) {
+                AuthService.loginUser(this, email, password) { loginSuccess ->
+                    if (loginSuccess) {
+                        AuthService.createUser(this, userName, email, userAvatar, avatarColor) {createSuccess ->
+                            if (createSuccess) {
+                                println(UserDataService.avatarName)
+                                println(UserDataService.avatarColor)
+                                println(UserDataService.name)
+                                finish()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
