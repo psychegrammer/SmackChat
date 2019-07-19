@@ -1,6 +1,7 @@
 package psychegrammer.example.smack.Controller
 
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -70,10 +71,9 @@ class CreateUserActivity : AppCompatActivity() {
                         if (loginSuccess) {
                             AuthService.createUser(this, userName, email, userAvatar, avatarColor) {createSuccess ->
                                 if (createSuccess) {
-
                                     val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(userDataChange)
-
+                                    sendBroadcast(userDataChange)
                                     enableSpinner(false)
                                     finish()
                                 } else {
