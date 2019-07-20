@@ -54,7 +54,6 @@ class CreateUserActivity : AppCompatActivity() {
         val savedB = b.toDouble() / 255
 
         avatarColor = "[$savedR, $savedG, $savedB, 1]"
-        println(avatarColor)
     }
 
     fun createUserClicked(view: View) {
@@ -86,6 +85,7 @@ class CreateUserActivity : AppCompatActivity() {
                     }
                 } else {
                     errorToast()
+
                 }
             }
         } else {
