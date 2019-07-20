@@ -76,6 +76,5 @@ class LoginActivity : AppCompatActivity() {
         if (inputManager.isAcceptingText) {
             inputManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
         }
-
     }
 }
