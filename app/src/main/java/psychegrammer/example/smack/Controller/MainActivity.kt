@@ -16,6 +16,7 @@ import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import io.socket.client.IO
 import io.socket.emitter.Emitter
@@ -33,6 +34,14 @@ import psychegrammer.example.smack.Utilities.SOCKET_URL
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
+    lateinit var channelAdapter: ArrayAdapter<Channel>
+
+    private fun setupAdapters() {
+        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
+        channel_list.adapter = channelAdapter
+
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         socket.connect()
         socket.on("channelCreated", onNewChannel)
+        setupAdapters()
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -69,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val userDataChangeReceiver =  object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+        override fun onReceive(context: Context, intent: Intent?) {
             // what we want to happen when that broadcast has been sent out
             if (AuthService.isLoggedIn) {
                  nav_drawer_header_include.userNameNavHeader.text = UserDataService.name
@@ -78,6 +88,12 @@ class MainActivity : AppCompatActivity() {
                  nav_drawer_header_include.userImageNavHeader.setImageResource(resourceId)
                  nav_drawer_header_include.userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                  nav_drawer_header_include.loginBtnNavHeader.text = "Logout"
+
+                MessageService.getChannels(context) {complete ->
+                    if (complete) {
+                        channelAdapter.notifyDataSetChanged()
+                    }
+                }
             }
         }
     }
@@ -143,6 +159,8 @@ class MainActivity : AppCompatActivity() {
             println(newChannel.name)
             println(newChannel.description)
             println(newChannel.id)
+
+            channelAdapter.notifyDataSetChanged()
         }
     }
 
