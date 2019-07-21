@@ -25,6 +25,7 @@ import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 import kotlinx.android.synthetic.main.nav_header_main.view.*
 import psychegrammer.example.smack.Model.Channel
+import psychegrammer.example.smack.Model.Message
 import psychegrammer.example.smack.R
 import psychegrammer.example.smack.Services.AuthService
 import psychegrammer.example.smack.Services.MessageService
@@ -51,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         socket.connect()
         socket.on("channelCreated", onNewChannel)
-        setupAdapters()
+        socket.on("messageCreated", onNewMessage)
 
         channel_list.setOnItemClickListener { _, _, i, _ ->
             selectedChannel = MessageService.channels[i]
@@ -71,6 +72,8 @@ class MainActivity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+        setupAdapters()
+
 
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
@@ -186,8 +189,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun sendMsgBtnClicked(view: View) {
+    private val onNewMessage = Emitter.Listener { args ->
+        // callback for this is on the different thread
+        // going back on the UiThread
+        // so that we can make changes on UserInterface
+        runOnUiThread {
+            val msgBody = args[0] as String
+            val channelId = args[2] as String
+            val userName = args[3] as String
+            val userAvatar = args[4] as String
+            val userAvatarColor = args[5] as String
+            val id = args[6] as String
+            val timeStamp = args[7] as String
 
+            val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
+            MessageService.messages.add(newMessage)
+            println(newMessage.message)
+        }
+    }
+
+    fun sendMsgBtnClicked(view: View) {
+        if (App.prefs.isLoggedIn && messageTextField.text.isNotEmpty() && selectedChannel != null) {
+            val userId = UserDataService.id
+            val channelId = selectedChannel!!.id
+            socket.emit("newMessage", messageTextField.text.toString(), userId, channelId, UserDataService.name, UserDataService.avatarName, UserDataService.avatarColor)
+            messageTextField.text.clear()
+            hideKeyboard()
+        }
     }
 
 

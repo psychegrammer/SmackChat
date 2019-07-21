@@ -8,11 +8,13 @@ import com.android.volley.toolbox.Volley
 import org.json.JSONException
 import psychegrammer.example.smack.Controller.App
 import psychegrammer.example.smack.Model.Channel
+import psychegrammer.example.smack.Model.Message
 import psychegrammer.example.smack.Utilities.URL_GET_CHANNELS
 
 object MessageService {
 
     val channels = ArrayList<Channel>()
+    val messages = ArrayList<Message>()
 
     fun getChannels(complete: (Boolean) -> Unit) {
 
