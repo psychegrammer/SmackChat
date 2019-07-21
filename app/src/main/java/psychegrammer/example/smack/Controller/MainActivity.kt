@@ -21,6 +21,7 @@ import android.widget.EditText
 import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 import kotlinx.android.synthetic.main.nav_header_main.view.*
 import psychegrammer.example.smack.Model.Channel
@@ -35,6 +36,8 @@ class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    var selectedChannel : Channel? = null // if we are not logged in -> no channel
+    // to know what messages to download
 
     private fun setupAdapters() {
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
@@ -49,6 +52,12 @@ class MainActivity : AppCompatActivity() {
         socket.connect()
         socket.on("channelCreated", onNewChannel)
         setupAdapters()
+
+        channel_list.setOnItemClickListener { _, _, i, _ ->
+            selectedChannel = MessageService.channels[i]
+            drawer_layout.closeDrawer(GravityCompat.START)
+            updateWithChannel()
+        }
 
         if (App.prefs.isLoggedIn) {
             AuthService.findUserByEmail(this) {}
@@ -91,13 +100,24 @@ class MainActivity : AppCompatActivity() {
                  nav_drawer_header_include.userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                  nav_drawer_header_include.loginBtnNavHeader.text = "Logout"
 
-                MessageService.getChannels(context) {complete ->
+                MessageService.getChannels {complete ->
                     if (complete) {
-                        channelAdapter.notifyDataSetChanged()
+                        if (MessageService.channels.count() > 0) {
+                            selectedChannel = MessageService.channels[0]
+                            channelAdapter.notifyDataSetChanged()
+                            updateWithChannel()
+
+                        }
                     }
                 }
             }
         }
+    }
+
+    fun updateWithChannel() {
+        mainChannelName.text = "#${selectedChannel?.name}"
+        // download messages for channel
+
     }
 
     override fun onBackPressed() {
@@ -132,7 +152,7 @@ class MainActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
             
-            builder.setView(dialogView).setPositiveButton("Add") { dialogInterface, i ->
+            builder.setView(dialogView).setPositiveButton("Add") { _, _ ->
                 // perform some logic when clicked
                 val nameTextField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
                 val descTextField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
