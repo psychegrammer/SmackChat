@@ -39,8 +39,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupAdapters() {
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
         channel_list.adapter = channelAdapter
-
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +49,10 @@ class MainActivity : AppCompatActivity() {
         socket.connect()
         socket.on("channelCreated", onNewChannel)
         setupAdapters()
+
+        if (App.prefs.isLoggedIn) {
+            AuthService.findUserByEmail(this) {}
+        }
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -81,7 +83,7 @@ class MainActivity : AppCompatActivity() {
     private val userDataChangeReceiver =  object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
             // what we want to happen when that broadcast has been sent out
-            if (AuthService.isLoggedIn) {
+            if (App.prefs.isLoggedIn) {
                  nav_drawer_header_include.userNameNavHeader.text = UserDataService.name
                  nav_drawer_header_include.userEmailNavHeader.text = UserDataService.email
                  val resourceId = resources.getIdentifier(UserDataService.avatarName, "drawable", packageName)
@@ -109,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
     fun loginBtnNavClicked(view: View) {
 
-        if (AuthService.isLoggedIn) {
+        if (App.prefs.isLoggedIn) {
             // log out
             UserDataService.logout()
             nav_drawer_header_include.userNameNavHeader.text = ""
@@ -126,7 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun addChannelClicked(view: View) {
-        if (AuthService.isLoggedIn) {
+        if (App.prefs.isLoggedIn) {
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
             
