@@ -17,22 +17,30 @@ import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import io.socket.client.IO
+import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 import kotlinx.android.synthetic.main.nav_header_main.view.*
+import psychegrammer.example.smack.Model.Channel
 import psychegrammer.example.smack.R
 import psychegrammer.example.smack.Services.AuthService
+import psychegrammer.example.smack.Services.MessageService
 import psychegrammer.example.smack.Services.UserDataService
 import psychegrammer.example.smack.Utilities.BROADCAST_USER_DATA_CHANGE
+import psychegrammer.example.smack.Utilities.SOCKET_URL
 
 class MainActivity : AppCompatActivity() {
 
+    val socket = IO.socket(SOCKET_URL)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+        socket.connect()
+        socket.on("channelCreated", onNewChannel)
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -42,26 +50,31 @@ class MainActivity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
-        hideKeyboard()
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(  BROADCAST_USER_DATA_CHANGE))
+        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
+    }
+
+    override fun onResume() {
+        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
+        super.onResume()
+
+    }
+
+
+    override fun onDestroy() {
+        socket.disconnect()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
+        super.onDestroy()
     }
 
     private val userDataChangeReceiver =  object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             // what we want to happen when that broadcast has been sent out
             if (AuthService.isLoggedIn) {
-                Log.d("qwe", UserDataService.name)
-                Log.d("qwe", UserDataService.email)
-                Log.d("qwe", UserDataService.avatarName)
-                Log.d("qwe", "Made it inside the broadcast bro")
-
-                Log.d("qwe", "Wrap")
-
                  nav_drawer_header_include.userNameNavHeader.text = UserDataService.name
                  nav_drawer_header_include.userEmailNavHeader.text = UserDataService.email
-                val resourceId = resources.getIdentifier(UserDataService.avatarName, "drawable", packageName)
+                 val resourceId = resources.getIdentifier(UserDataService.avatarName, "drawable", packageName)
                  nav_drawer_header_include.userImageNavHeader.setImageResource(resourceId)
                  nav_drawer_header_include.userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                  nav_drawer_header_include.loginBtnNavHeader.text = "Logout"
@@ -109,14 +122,27 @@ class MainActivity : AppCompatActivity() {
                 val channelDesc = descTextField.text.toString()
 
                 // Create channel with the channel name and description
-                hideKeyboard()
+                socket.emit("newChannel", channelName, channelDesc)
 
 
             }.setNegativeButton("Cancel") { dialogInterface, i ->
                 // cancel and close the dialog
-                hideKeyboard()
-                
+
             }.show()
+        }
+    }
+
+    private val onNewChannel = Emitter.Listener {args ->
+        runOnUiThread {
+            val channelName = args[0] as String
+            val channelDesc = args[1] as String
+            val channelId = args[2] as String
+
+            val newChannel = Channel(channelName, channelDesc, channelId)
+            MessageService.channels.add(newChannel)
+            println(newChannel.name)
+            println(newChannel.description)
+            println(newChannel.id)
         }
     }
 
