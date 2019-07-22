@@ -63,16 +63,6 @@ class MainActivity : AppCompatActivity() {
         socket.on("channelCreated", onNewChannel)
         socket.on("messageCreated", onNewMessage)
 
-        channel_list.setOnItemClickListener { _, _, i, _ ->
-            selectedChannel = MessageService.channels[i]
-            drawer_layout.closeDrawer(GravityCompat.START)
-            updateWithChannel()
-        }
-
-        if (App.prefs.isLoggedIn) {
-            AuthService.findUserByEmail(this) {}
-        }
-
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
@@ -82,16 +72,17 @@ class MainActivity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
         setupAdapters()
-
-
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
 
-    }
+        channel_list.setOnItemClickListener { _, _, i, _ ->
+            selectedChannel = MessageService.channels[i]
+            drawer_layout.closeDrawer(GravityCompat.START)
+            updateWithChannel()
+        }
 
-    override fun onResume() {
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(BROADCAST_USER_DATA_CHANGE))
-        super.onResume()
-
+        if (App.prefs.isLoggedIn) {
+            AuthService.findUserByEmail(this) {}
+        }
     }
 
 
@@ -165,6 +156,7 @@ class MainActivity : AppCompatActivity() {
             nav_drawer_header_include.userImageNavHeader.setImageResource(R.drawable.profiledefault)
             nav_drawer_header_include.userImageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             nav_drawer_header_include.loginBtnNavHeader.text = "Login"
+            mainChannelName.text = "Please Log In"
 
         } else {
             val loginIntent = Intent(this, LoginActivity::class.java)
